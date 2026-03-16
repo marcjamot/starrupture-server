@@ -1,0 +1,265 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: starrupture
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: starrupture
+  namespace: starrupture
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: starrupture-steam
+  namespace: starrupture
+type: Opaque
+stringData:
+  username: "anonymous"
+  password: ""
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: starrupture
+  namespace: starrupture
+  labels:
+    app.kubernetes.io/name: starrupture
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: starrupture
+  ports:
+    - name: game
+      protocol: UDP
+      port: 7777
+      targetPort: 7777
+      nodePort: 30777
+    - name: query
+      protocol: UDP
+      port: 27015
+      targetPort: 27015
+      nodePort: 32015
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: starrupture
+  namespace: starrupture
+spec:
+  serviceName: starrupture
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: starrupture
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: starrupture
+    spec:
+      serviceAccountName: starrupture
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: starrupture
+          image: starrupture-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: game
+              containerPort: 7777
+              protocol: UDP
+            - name: query
+              containerPort: 27015
+              protocol: UDP
+          env:
+            - name: APP_ID
+              value: "3809400"
+            - name: STEAM_LOGIN
+              valueFrom:
+                secretKeyRef:
+                  name: starrupture-steam
+                  key: username
+                  optional: true
+            - name: STEAM_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: starrupture-steam
+                  key: password
+                  optional: true
+            - name: SERVER_NAME
+              value: "StarRupture Server"
+            - name: MULTIHOME_IP
+              value: "0.0.0.0"
+            - name: PROTON_LOG
+              value: "0"
+          resources:
+            requests:
+              cpu: "4"
+              memory: "12Gi"
+              ephemeral-storage: "10Gi"
+            limits:
+              cpu: "4"
+              memory: "12Gi"
+              ephemeral-storage: "10Gi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+          volumeMounts:
+            - name: steam-home
+              mountPath: /home/steam
+  volumeClaimTemplates:
+    - metadata:
+        name: steam-home
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 30Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: starrupture
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-game-ingress
+  namespace: starrupture
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: starrupture
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: UDP
+          port: 7777
+        - protocol: UDP
+          port: 27015
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-and-internet-egress
+  namespace: starrupture
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: starrupture
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 100.64.0.0/10
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+        - protocol: UDP
+          port: 4380
+        - protocol: UDP
+          port: 27000
+        - protocol: UDP
+          port: 27001
+        - protocol: UDP
+          port: 27002
+        - protocol: UDP
+          port: 27003
+        - protocol: UDP
+          port: 27004
+        - protocol: UDP
+          port: 27005
+        - protocol: UDP
+          port: 27006
+        - protocol: UDP
+          port: 27007
+        - protocol: UDP
+          port: 27008
+        - protocol: UDP
+          port: 27009
+        - protocol: UDP
+          port: 27010
+        - protocol: UDP
+          port: 27011
+        - protocol: UDP
+          port: 27012
+        - protocol: UDP
+          port: 27013
+        - protocol: UDP
+          port: 27014
+        - protocol: UDP
+          port: 27015
+        - protocol: UDP
+          port: 27016
+        - protocol: UDP
+          port: 27017
+        - protocol: UDP
+          port: 27018
+        - protocol: UDP
+          port: 27019
+        - protocol: UDP
+          port: 27020
+        - protocol: UDP
+          port: 27021
+        - protocol: UDP
+          port: 27022
+        - protocol: UDP
+          port: 27023
+        - protocol: UDP
+          port: 27024
+        - protocol: UDP
+          port: 27025
+        - protocol: UDP
+          port: 27026
+        - protocol: UDP
+          port: 27027
+        - protocol: UDP
+          port: 27028
+        - protocol: UDP
+          port: 27029
+        - protocol: UDP
+          port: 27030
