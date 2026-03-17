@@ -21,8 +21,8 @@ metadata:
   namespace: starrupture
 type: Opaque
 stringData:
-  username: "anonymous"
-  password: ""
+  adminPassword: ""
+  playerPassword: ""
 ---
 apiVersion: v1
 kind: Service
@@ -87,26 +87,28 @@ spec:
               containerPort: 27015
               protocol: UDP
           env:
-            - name: APP_ID
-              value: "3809400"
-            - name: STEAM_LOGIN
-              valueFrom:
-                secretKeyRef:
-                  name: starrupture-steam
-                  key: username
-                  optional: true
-            - name: STEAM_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: starrupture-steam
-                  key: password
-                  optional: true
             - name: SERVER_NAME
               value: "StarRupture Server"
-            - name: MULTIHOME_IP
+            - name: DEFAULT_PORT
+              value: "7777"
+            - name: QUERY_PORT
+              value: "27015"
+            - name: MULTIHOME
               value: "0.0.0.0"
-            - name: PROTON_LOG
-              value: "0"
+            - name: SAVE_GAME_NAME
+              value: "AutoSave0.sav"
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: starrupture-steam
+                  key: adminPassword
+                  optional: true
+            - name: PLAYER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: starrupture-steam
+                  key: playerPassword
+                  optional: true
           resources:
             requests:
               cpu: "4"
@@ -124,7 +126,7 @@ spec:
             readOnlyRootFilesystem: false
           volumeMounts:
             - name: steam-home
-              mountPath: /home/steam
+              mountPath: /home/steam/server-data
   volumeClaimTemplates:
     - metadata:
         name: steam-home
@@ -201,6 +203,8 @@ spec:
           port: 443
         - protocol: UDP
           port: 4380
+        - protocol: TCP
+          port: 7777
         - protocol: UDP
           port: 27000
         - protocol: UDP
