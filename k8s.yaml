@@ -126,7 +126,11 @@ spec:
             readOnlyRootFilesystem: false
           volumeMounts:
             - name: steam-home
+              mountPath: /home/steam/server-files
+              subPath: server-files
+            - name: steam-home
               mountPath: /home/steam/server-data
+              subPath: server-data
   volumeClaimTemplates:
     - metadata:
         name: steam-home
