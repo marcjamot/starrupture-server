@@ -111,12 +111,12 @@ spec:
                   optional: true
           resources:
             requests:
-              cpu: "4"
-              memory: "12Gi"
+              cpu: "10"
+              memory: "16Gi"
               ephemeral-storage: "10Gi"
             limits:
-              cpu: "4"
-              memory: "12Gi"
+              cpu: "10"
+              memory: "16Gi"
               ephemeral-storage: "10Gi"
           securityContext:
             allowPrivilegeEscalation: false
